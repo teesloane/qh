@@ -6,18 +6,27 @@ import scipy.io.wavfile
 import numpy as np
 from pydub import AudioSegment
 
+# from prompt_toolkit import prompt
+# from prompt_toolkit.validation import Validator, ValidationError
 
 SONGS = []
-TMP_FOL = "./tmp/"
-MIX_FOL = "../mix/"
-EXPORT_FOL = "./export/"
-TRACKLIST = EXPORT_FOL + "./tracklist.txt"
+QH_FOL = MIX_FOL = TMP_FOL = EXPORT_FOL = TRACKLIST = None # haha...
+
+
+def setup_paths():
+    global TMP_FOL, MIX_FOL, EXPORT_FOL, TRACKLIST # bad bad bad probably
+    print("QHFOL IS ", QH_FOL)
+    TMP_FOL = QH_FOL + "/program/tmp/"
+    print("TMP_FOL", TMP_FOL)
+    MIX_FOL = QH_FOL + "/mix/"
+    EXPORT_FOL = QH_FOL + "/export/"
+    TRACKLIST = EXPORT_FOL + "./tracklist.txt"
 
 
 def load_songs(song_list, ext):
     """Load songs from mix folder and convert to AudioSegments + data"""
     print("Loading songs as AudioSegments...")
-    for file in glob("../mix/*" + ext)[:3]:
+    for file in glob(MIX_FOL + "*" + ext)[:3]:
         audio_data = {
             "name": file.replace("../mix/", "").replace(ext, ""),
             "path:": file,
@@ -32,6 +41,9 @@ def load_songs(song_list, ext):
 
 def setup():
     """set up temp folder, convert to wav"""
+
+    setup_paths()
+
     if not os.path.exists(TMP_FOL):
         os.makedirs(TMP_FOL)
 
@@ -88,7 +100,7 @@ def analysis():
 
 def teardown():
     """Remove temporary files"""
-    shutil.rmtree("./tmp")
+    shutil.rmtree(TMP_FOL) # It bad!
 
 
 def main():
@@ -100,4 +112,6 @@ def main():
 
 
 if __name__ == "__main__":
+    QH_FOL = input("Path to playlist folder: ")
+    print(type(QH_FOL))
     main()
