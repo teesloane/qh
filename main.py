@@ -2,22 +2,22 @@
 import os
 import shutil
 from glob import glob
-import pprint
 import scipy.io.wavfile
 import numpy as np
 from pydub import AudioSegment
 
-pp = pprint.PrettyPrinter(indent=4)
 
 SONGS = []
 TMP_FOL = "./tmp/"
 MIX_FOL = "../mix/"
+EXPORT_FOL = "./export/"
+TRACKLIST = EXPORT_FOL + "./tracklist.txt"
 
 
 def load_songs(song_list, ext):
     """Load songs from mix folder and convert to AudioSegments + data"""
     print("Loading songs as AudioSegments...")
-    for file in glob("../mix/*" + ext)[0:3]:  # HEY! NOTE if !dev remove 0:3
+    for file in glob("../mix/*" + ext)[:3]:
         audio_data = {
             "name": file.replace("../mix/", "").replace(ext, ""),
             "path:": file,
@@ -35,8 +35,11 @@ def setup():
     if not os.path.exists(TMP_FOL):
         os.makedirs(TMP_FOL)
 
+    if not os.path.exists(EXPORT_FOL):
+        os.makedirs(EXPORT_FOL)
+
     load_songs(SONGS, ".mp3")
-    mp3_list_to_wav(SONGS)
+    # mp3_list_to_wav(SONGS)
 
 
 def mp3_list_to_wav(lst):
@@ -47,6 +50,24 @@ def mp3_list_to_wav(lst):
         with open(wav_path, "wb") as ftwo:
             file["mp3"].export(ftwo, format="wav")
             file["wav_path"] = wav_path
+
+
+def mixdown():
+    songs_sorted = sorted(SONGS, key=lambda k: k["name"])
+    tracklist = open(TRACKLIST, "a")
+    tracklist.write(songs_sorted[0]["name"] + "\n")
+    playlist = songs_sorted[0]["mp3"]
+    for song in songs_sorted[1:]:
+        print("Appending:", song["name"])
+        audio = song["mp3"]
+        tracklist.write(song["name"] + "\n")
+        # playlist.append(audio, crossfade=2000) # this fails, sadly, so no crossfade .... :
+        playlist = playlist + audio
+
+    tracklist.close()
+
+    out_f = open(EXPORT_FOL + "/output.mp3", "wb")
+    playlist.export(out_f, format="mp3")
 
 
 def analysis():
@@ -61,7 +82,7 @@ def analysis():
 
     # ch1 = aud_data[:, 0]
     # ch2 = aud_data[:, 1]
-    np.savetxt("testfile", SONGS[1]["amp_x_time"], newline="\n")  # makes a giant file.
+    # np.savetxt("testfile", SONGS[1]["amp_x_time"], newline="\n")  # makes a giant file.
     # print("song length is of", SONGS[0]['name'], (aud_data.shape[0] / rate) / 60)
 
 
@@ -73,8 +94,9 @@ def teardown():
 def main():
     """sing some songs"""
     setup()
-    analysis()
-    # teardown()
+    mixdown()
+    # analysis()
+    teardown()
 
 
 if __name__ == "__main__":
