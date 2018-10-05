@@ -8,6 +8,7 @@ pydub = "*"
 scipy = "*"
 numpy = "*"
 matplotlib = "*"
+halo = "*"
 
 [dev-packages]
 rope = "*"

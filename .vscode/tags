@@ -1,0 +1,30 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.8	//
+AudioSegment	../main.py	/^from pydub import AudioSegment$/;"	kind:namespace	line:7
+EXPORT_FOL	../main.py	/^EXPORT_FOL =  ".\/export\/"$/;"	kind:variable	line:14
+MIX_FOL	../main.py	/^MIX_FOL =  "..\/mix\/" ## TODO will eventually be "where the cmd is run."$/;"	kind:variable	line:13
+SONGS	../main.py	/^SONGS = []$/;"	kind:variable	line:9
+TMP_FOL	../main.py	/^TMP_FOL =  ".\/tmp\/"$/;"	kind:variable	line:12
+TRACKLIST	../main.py	/^TRACKLIST = EXPORT_FOL + ".\/tracklist.txt"$/;"	kind:variable	line:15
+analysis	../main.py	/^def analysis():$/;"	kind:function	line:79
+draw	../sketch.py	/^def draw():$/;"	kind:function	line:4
+glob	../main.py	/^from glob import glob$/;"	kind:namespace	line:4
+io	../main.py	/^import scipy.io.wavfile$/;"	kind:namespace	line:5
+load_songs	../main.py	/^def load_songs(song_list, ext):$/;"	kind:function	line:19
+main	../main.py	/^def main():$/;"	kind:function	line:101
+main.py	../main.py	1;"	kind:file	line:1
+mixdown	../main.py	/^def mixdown():$/;"	kind:function	line:60
+mp3_list_to_wav	../main.py	/^def mp3_list_to_wav(lst):$/;"	kind:function	line:47
+np	../main.py	/^import numpy as np$/;"	kind:namespace	line:6
+os	../main.py	/^import os$/;"	kind:namespace	line:2
+scipy	../main.py	/^import scipy.io.wavfile$/;"	kind:namespace	line:5
+setup	../main.py	/^def setup():$/;"	kind:function	line:35
+setup	../sketch.py	/^def setup():$/;"	kind:function	line:1
+shutil	../main.py	/^import shutil$/;"	kind:namespace	line:3
+sketch.py	../sketch.py	1;"	kind:file	line:1
+teardown	../main.py	/^def teardown():$/;"	kind:function	line:96
+wavfile	../main.py	/^import scipy.io.wavfile$/;"	kind:namespace	line:5
