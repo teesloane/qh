@@ -6,23 +6,30 @@ import shutil
 from glob import glob
 from pydub import AudioSegment
 from halo import Halo
+import argparse
 
 SONGS = []
 
-TMP_FOL = "./tmp/"  # DO NOT TOUCH, gets RECURSIVELY DELETED
-MIX_FOL = "../mix/"  # FIXME should be "where the cmd is run."  Currently hardcoded.
-EXPORT_FOL = "./export/"  # DO NOT TOUCH, can get RECURSIVELY DELETED
+TMP_FOL = "./tmp/"                           # DO NOT TOUCH, gets RECURSIVELY DELETED
+MIX_FOL = "../mix/"                          # FIXME should be "where the cmd is run."  Currently hardcoded.
+EXPORT_FOL = "./export/"                     # DO NOT TOUCH, can get RECURSIVELY DELETED
 TRACKLIST = EXPORT_FOL + "./tracklist.txt"
+SAMPLE_SIZE = (
+    5000
+)  # should be made based on division of how many tracks there are to make cumulative 60 second sampler.
 
 
 @Halo(text="Loading songs as AudioSegments", spinner="arrow3")
 def load_songs(song_list, ext):
     """Load songs from mix folder and convert to AudioSegments + data"""
-    for file in glob(MIX_FOL + "*" + ext)[:2]:  # DONT YOU, FORGET ABOUT FIXME
+    for file in glob(MIX_FOL + "*" + ext):  # DONT YOU, FORGET ABOUT FIXME
+        song = AudioSegment.from_mp3(file)
+
         audio_data = {
             "name": file.replace("../mix/", "").replace(ext, ""),
             "path:": file,
-            "mp3": AudioSegment.from_mp3(file),
+            "mp3": song,
+            "sample": sample_song(song),
             "wav_path": "",
             "rate": None,
             "aud_data": None,
@@ -67,8 +74,8 @@ def mp3_list_to_wav(lst):
             file["wav_path"] = wav_path
 
 
-def mixdown():
-    """Creates a playlist and saves to file."""
+def mixdown(sample):
+    """Creates a playlist and saves to file. Can also make a 'sampler'"""
     # Spinner can't be a decorator or it glitches with export_playlist
     spinner = Halo(text="Building playlist...️", spinner="earth")
     spinner.start()
@@ -78,14 +85,37 @@ def mixdown():
     playlist = AudioSegment.empty()
 
     # Write playlist and tracklist to memory.
-    for song in s_sorted:  # Concat audio objects into full playlist.
-        audio = song["mp3"]
+    for idx, song in enumerate(s_sorted):  # Concat audio objects into full playlist.
+        # If we're just getting a sample , concat a playlist of samples.
+        if sample:
+            if idx == 0:
+                playlist = song["sample"][:SAMPLE_SIZE]
+            else:
+                audio = song["sample"]
+                playlist = playlist.append(audio, crossfade=(1500))
+
+        # Otherwise, just make the full playlist.
+        else:
+            audio = song["mp3"]
+            playlist = playlist + audio
+
         tracklist.write(song["name"] + "\n")
-        playlist = playlist + audio
 
     tracklist.close()
     spinner.stop()
-    export_playlist(playlist)
+
+    if sample:
+        export_playlist(playlist.fade_in(2000).fade_out(2000))
+    else:
+        export_playlist(playlist)
+
+
+def sample_song(song):
+    """Take song, get it's length, divide by two, subtract half of sampleSize, return audio"""
+    song_length = len(song) / 1000 * 60
+    song_middle = song_length / 2 - (SAMPLE_SIZE / 2)
+    sliced_song = song[song_middle : song_middle + SAMPLE_SIZE]
+    return sliced_song
 
 
 @Halo(text="Saving playlist...", spinner="moon")
@@ -101,13 +131,18 @@ def teardown():
     print("Playlist exported to: './export/ folder'")
 
 
-def main():
+def main(args):
     """sing some songs"""
     setup()
     load_songs(SONGS, ".mp3")
-    mixdown()
+    mixdown(args.s)
     teardown()
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "-s", help="Mix down samples of the songs.", action="store_true"
+    )
+    args = parser.parse_args()
+    main(args)
