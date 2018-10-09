@@ -10,19 +10,25 @@ import argparse
 
 SONGS = []
 
-TMP_FOL = "./tmp/"                           # DO NOT TOUCH, gets RECURSIVELY DELETED
-MIX_FOL = "../mix/"                          # FIXME should be "where the cmd is run."  Currently hardcoded.
-EXPORT_FOL = "./export/"                     # DO NOT TOUCH, can get RECURSIVELY DELETED
+TMP_FOL = "./tmp/"  # DO NOT TOUCH, gets RECURSIVELY DELETED
+MIX_FOL = "../mix/"  # FIXME should be "where the cmd is run."  Currently hardcoded.
+EXPORT_FOL = "./export/"  # DO NOT TOUCH, can get RECURSIVELY DELETED
 TRACKLIST = EXPORT_FOL + "./tracklist.txt"
-SAMPLE_SIZE = (
-    5000
-)  # should be made based on division of how many tracks there are to make cumulative 60 second sampler.
+CROSSFADE_TIME = 3500
+SAMPLE_SIZE = 5000  # Changes based on num songs passed in.
 
 
 @Halo(text="Loading songs as AudioSegments", spinner="arrow3")
 def load_songs(song_list, ext):
     """Load songs from mix folder and convert to AudioSegments + data"""
-    for file in glob(MIX_FOL + "*" + ext):  # DONT YOU, FORGET ABOUT FIXME
+
+    songs = glob(MIX_FOL + "*" + ext)
+    global SAMPLE_SIZE
+    num_songs = len(songs)
+    SAMPLE_SIZE = (60 / len(songs) * 1000 ) + CROSSFADE_TIME
+    
+
+    for file in songs:
         song = AudioSegment.from_mp3(file)
 
         audio_data = {
@@ -74,7 +80,7 @@ def mp3_list_to_wav(lst):
             file["wav_path"] = wav_path
 
 
-def mixdown(sample):
+def mixdown(is_sample):
     """Creates a playlist and saves to file. Can also make a 'sampler'"""
     # Spinner can't be a decorator or it glitches with export_playlist
     spinner = Halo(text="Building playlist...️", spinner="earth")
@@ -87,12 +93,12 @@ def mixdown(sample):
     # Write playlist and tracklist to memory.
     for idx, song in enumerate(s_sorted):  # Concat audio objects into full playlist.
         # If we're just getting a sample , concat a playlist of samples.
-        if sample:
+        if is_sample:
             if idx == 0:
                 playlist = song["sample"][:SAMPLE_SIZE]
             else:
                 audio = song["sample"]
-                playlist = playlist.append(audio, crossfade=(1500))
+                playlist = playlist.append(audio, crossfade=CROSSFADE_TIME)
 
         # Otherwise, just make the full playlist.
         else:
@@ -104,8 +110,8 @@ def mixdown(sample):
     tracklist.close()
     spinner.stop()
 
-    if sample:
-        export_playlist(playlist.fade_in(2000).fade_out(2000))
+    if is_sample:
+        export_playlist(playlist.fade_in(2000).fade_out(2000), "sample")
     else:
         export_playlist(playlist)
 
@@ -119,9 +125,9 @@ def sample_song(song):
 
 
 @Halo(text="Saving playlist...", spinner="moon")
-def export_playlist(playlist):
+def export_playlist(playlist, name="output"):
     """Saves playlist to file"""
-    out_f = open(EXPORT_FOL + "/output.mp3", "wb")
+    out_f = open(EXPORT_FOL + "/" + name + ".mp3", "wb")
     playlist.export(out_f, format="mp3")
 
 
