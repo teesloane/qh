@@ -3,10 +3,10 @@
 """
 import os
 import shutil
+import argparse
 from glob import glob
 from pydub import AudioSegment
 from halo import Halo
-import argparse
 
 SONGS = []
 
@@ -16,6 +16,7 @@ EXPORT_FOL = "./export/"  # DO NOT TOUCH, can get RECURSIVELY DELETED
 TRACKLIST = EXPORT_FOL + "./tracklist.txt"
 CROSSFADE_TIME = 3500
 SAMPLE_SIZE = 5000  # Changes based on num songs passed in.
+id3 = {}
 
 
 @Halo(text="Loading songs as AudioSegments", spinner="arrow3")
@@ -25,8 +26,7 @@ def load_songs(song_list, ext):
     songs = glob(MIX_FOL + "*" + ext)
     global SAMPLE_SIZE
     num_songs = len(songs)
-    SAMPLE_SIZE = (60 / len(songs) * 1000 ) + CROSSFADE_TIME
-    
+    SAMPLE_SIZE = (60 / len(songs) * 1000) + CROSSFADE_TIME
 
     for file in songs:
         song = AudioSegment.from_mp3(file)
@@ -113,7 +113,7 @@ def mixdown(is_sample):
     if is_sample:
         export_playlist(playlist.fade_in(2000).fade_out(2000), "sample")
     else:
-        export_playlist(playlist)
+        export_playlist(playlist, id3['file_name'])
 
 
 def sample_song(song):
@@ -128,7 +128,12 @@ def sample_song(song):
 def export_playlist(playlist, name="output"):
     """Saves playlist to file"""
     out_f = open(EXPORT_FOL + "/" + name + ".mp3", "wb")
-    playlist.export(out_f, format="mp3")
+    playlist.export(
+        out_f,
+        format="mp3",
+        bitrate="192k",
+        tags={"artist": id3['artist'], "album": id3['album'], "title": id3['title']},
+    )
 
 
 def teardown():
@@ -150,5 +155,11 @@ if __name__ == "__main__":
     parser.add_argument(
         "-s", help="Mix down samples of the songs.", action="store_true"
     )
+
+    id3['file_name'] = input("File name for mix: ")
+    id3['artist'] = input("[id3] Artist: ")
+    id3['album'] = input("[id3] Album: ")
+    id3['title'] = input("[id3] Title: ")
+
     args = parser.parse_args()
     main(args)
