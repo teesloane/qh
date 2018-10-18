@@ -1,6 +1,6 @@
-""" Sing that song.
-"""
-import os, sys
+""" Sing that song. """
+import os
+import sys
 import shutil
 import argparse
 from glob import glob

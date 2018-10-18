@@ -1,6 +1,3 @@
-gen: 
-	java -jar processing-py.jar sketch.py
-
 bundle:
 	pyinstaller main.py --onefile
 

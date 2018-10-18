@@ -1,6 +1,5 @@
 # QH
 
-
 `QH` is a utility for building playlists from a folder of mp3s. Basically it:
 
 - Grabs mp3 in a folder, sorts by name, and joins them into a playlist; and
