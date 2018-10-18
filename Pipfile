@@ -8,6 +8,7 @@ pydub = "*"
 scipy = "*"
 numpy = "*"
 matplotlib = "*"
+pyinstaller = "*"
 
 [dev-packages]
 rope = "*"

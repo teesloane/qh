@@ -1,5 +1,4 @@
 """ Sing that song.
-- TODO - Make runnable from anywhere 
 """
 import os, sys
 import shutil
@@ -17,6 +16,7 @@ TRACKLIST = EXPORT_FOL + "./tracklist.txt"
 CROSSFADE_TIME = 3500
 SAMPLE_SIZE = 5000  # Changes based on num songs passed in.
 id3 = {}
+
 
 def load_songs(song_list, ext):
     """Load songs from mix folder and convert to AudioSegments + data"""
@@ -44,24 +44,20 @@ def load_songs(song_list, ext):
 
 def setup():
     """Check for/remove/setup necessary folders"""
-
-    print("Setting up export folder")
+    print("Running setup...")
     if os.path.exists(EXPORT_FOL):
-        ## TODO auto exist, tell user to delete export folder or run command with --overwrite etc
-        choice = input("Export folder already exists, proceed and overwrite? [Y/n]: ")
-        if choice == "Y":
-            shutil.rmtree(EXPORT_FOL)
-        else:
-            print("Exiting!")
-            exit()
+        print("Mix 'export' folder exists! Remove it if you wish to create a new mix.")
+        sys.exit()
 
     if not os.path.exists(MIX_FOL):
-        print("No 'mix' folder found.")
-        exit()
+        print(
+            "No 'mix' folder found. Make sure you have a folder named 'mix' with audio files in it."
+        )
+        sys.exit()
 
     if glob(MIX_FOL + "*.mp3") == []:
         print("No mp3 files found in 'mix' folder")
-        exit()
+        sys.exit()
 
     if not os.path.exists(TMP_FOL):
         os.makedirs(TMP_FOL)
@@ -80,8 +76,8 @@ def mp3_list_to_wav(lst):
             file["wav_path"] = wav_path
 
 
-def mixdown(is_sample):
-    """Creates a playlist and saves to file. Can also make a 'sampler'"""
+def mixdown():
+    """Joins audio files into a mix to be exported (full mix and sample mix)"""
 
     print("Performing Mixdown...")
     s_sorted = sorted(SONGS, key=lambda k: k["name"])
@@ -109,9 +105,11 @@ def mixdown(is_sample):
     tracklist.close()
 
     print("saving sample playlist to file...")
-    export_playlist(playlist_sample.fade_in(2000).fade_out(2000), id3['file_name'] + "_sample")
+    export_playlist(
+        playlist_sample.fade_in(2000).fade_out(2000), id3["file_name"] + "_sample"
+    )
     print("saving full mix to file...")
-    export_playlist(playlist_full, id3['file_name'])
+    export_playlist(playlist_full, id3["file_name"])
 
 
 def sample_song(song):
@@ -129,7 +127,7 @@ def export_playlist(playlist, name="output"):
         out_f,
         format="mp3",
         bitrate="192k",
-        tags={"artist": id3['artist'], "album": id3['album'], "title": id3['title']},
+        tags={"artist": id3["artist"], "album": id3["album"], "title": id3["title"]},
     )
 
 
@@ -143,21 +141,22 @@ def main(args):
     """sing some songs"""
     setup()
     load_songs(SONGS, ".mp3")
-    mixdown(args.s)
+    mixdown()
     teardown()
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "-s", help="Mix down samples of the songs.", action="store_true"
-    )
-
-    ## TODO - convert these to args...
-    id3['file_name'] = "f_name" # input("File name for mix: ")
-    id3['artist'] = "artist_name" # input("[id3] Artist: ")
-    id3['album'] = "album_name" # input("[id3] Album: ")
-    id3['title'] = "title_name" # input("[id3] Title: ")
+    parser.add_argument("-artist", help="id3 tag for mix artist")
+    parser.add_argument("-album", help="id3 tag for mix artist")
+    parser.add_argument("-title", help="id3 tag for mix artist")
 
     args = parser.parse_args()
+
+    u = "Unknown"
+    id3["file_name"] = args.title or "mix"
+    id3["artist"] = args.artist or u
+    id3["album"] = args.album or u
+    id3["title"] = args.title or "mix"
+
     main(args)
