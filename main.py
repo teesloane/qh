@@ -6,7 +6,6 @@ import shutil
 import argparse
 from glob import glob
 from pydub import AudioSegment
-# from halo import Halo
 
 SONGS = []
 
@@ -123,7 +122,6 @@ def sample_song(song):
     return sliced_song
 
 
-# @Halo(text="Saving playlist...", spinner="moon")
 def export_playlist(playlist, name="output"):
     """Saves playlist to file"""
     out_f = open(EXPORT_FOL + "/" + name + ".mp3", "wb")
