@@ -43,4 +43,3 @@ QH --help
 - QH uses `pipenv` in development. 
 - The project is used with `pyinstaller` to create executables.
 - `make` commands assume you have [trash](https://github.com/sindresorhus/trash) installed. ¯\\_(ツ)_/¯ 
-- [ ] TODO: actual build details ಠ_ಠ 
