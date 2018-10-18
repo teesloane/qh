@@ -1,5 +1,5 @@
 bundle:
-	pyinstaller main.py --onefile
+	pyinstaller main.py --onefile; mv dist/main dist/QH
 
 clean:
 	trash build; trash dist
