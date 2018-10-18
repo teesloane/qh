@@ -1,31 +1,30 @@
-""" Sing that song. 
+""" Sing that song.
 - TODO - Make runnable from anywhere 
 """
-import os
+import os, sys
 import shutil
 import argparse
 from glob import glob
 from pydub import AudioSegment
-from halo import Halo
+# from halo import Halo
 
 SONGS = []
 
-TMP_FOL = "./tmp/"  # DO NOT TOUCH, gets RECURSIVELY DELETED
-MIX_FOL = "../mix/"  # FIXME should be "where the cmd is run."  Currently hardcoded.
-EXPORT_FOL = "./export/"  # DO NOT TOUCH, can get RECURSIVELY DELETED
+PWD = os.getcwd()
+TMP_FOL = PWD + "/tmp/"  # DO NOT TOUCH, gets RECURSIVELY DELETED
+MIX_FOL = PWD + "/mix/"
+EXPORT_FOL = PWD + "/export/"  # DO NOT TOUCH, can get RECURSIVELY DELETED
 TRACKLIST = EXPORT_FOL + "./tracklist.txt"
 CROSSFADE_TIME = 3500
 SAMPLE_SIZE = 5000  # Changes based on num songs passed in.
 id3 = {}
 
-
-@Halo(text="Loading songs as AudioSegments", spinner="arrow3")
 def load_songs(song_list, ext):
     """Load songs from mix folder and convert to AudioSegments + data"""
 
+    print("Loading songs as audio segments...")
     songs = glob(MIX_FOL + "*" + ext)
     global SAMPLE_SIZE
-    num_songs = len(songs)
     SAMPLE_SIZE = (60 / len(songs) * 1000) + CROSSFADE_TIME
 
     for file in songs:
@@ -47,7 +46,9 @@ def load_songs(song_list, ext):
 def setup():
     """Check for/remove/setup necessary folders"""
 
+    print("Setting up export folder")
     if os.path.exists(EXPORT_FOL):
+        ## TODO auto exist, tell user to delete export folder or run command with --overwrite etc
         choice = input("Export folder already exists, proceed and overwrite? [Y/n]: ")
         if choice == "Y":
             shutil.rmtree(EXPORT_FOL)
@@ -70,9 +71,9 @@ def setup():
         os.makedirs(EXPORT_FOL)
 
 
-@Halo(text="Converting MP3s to WAV for analysis", spinner="bouncingBall")
 def mp3_list_to_wav(lst):
     """Convert list of mp3s to wavs. Adds wav path to the SONGS list."""
+    print("converting mp3's to wav...")
     for file in lst:
         wav_path = TMP_FOL + file["name"] + ".wav"  # get proper wave file name.
         with open(wav_path, "wb") as ftwo:  # write wavs to temp folder.
@@ -82,38 +83,36 @@ def mp3_list_to_wav(lst):
 
 def mixdown(is_sample):
     """Creates a playlist and saves to file. Can also make a 'sampler'"""
-    # Spinner can't be a decorator or it glitches with export_playlist
-    spinner = Halo(text="Building playlist...️", spinner="earth")
-    spinner.start()
 
+    print("Performing Mixdown...")
     s_sorted = sorted(SONGS, key=lambda k: k["name"])
     tracklist = open(TRACKLIST, "a")
-    playlist = AudioSegment.empty()
+    playlist_full = AudioSegment.empty()
+    playlist_sample = AudioSegment.empty()
 
     # Write playlist and tracklist to memory.
     for idx, song in enumerate(s_sorted):  # Concat audio objects into full playlist.
-        # If we're just getting a sample , concat a playlist of samples.
-        if is_sample:
-            if idx == 0:
-                playlist = song["sample"][:SAMPLE_SIZE]
-            else:
-                audio = song["sample"]
-                playlist = playlist.append(audio, crossfade=CROSSFADE_TIME)
 
-        # Otherwise, just make the full playlist.
+        # build sample playlist (can't start from AS.empty if using crossfade.)
+        if idx == 0:
+            playlist_sample = song["sample"][:SAMPLE_SIZE]
         else:
-            audio = song["mp3"]
-            playlist = playlist + audio
+            audio = song["sample"]
+            playlist_sample = playlist_sample.append(audio, crossfade=CROSSFADE_TIME)
 
+        # build full playlist
+        audio = song["mp3"]
+        playlist_full = playlist_full + audio
+
+        # song names have full path in it -- TODO FIXME
         tracklist.write(song["name"] + "\n")
 
     tracklist.close()
-    spinner.stop()
 
-    if is_sample:
-        export_playlist(playlist.fade_in(2000).fade_out(2000), "sample")
-    else:
-        export_playlist(playlist, id3['file_name'])
+    print("saving sample playlist to file...")
+    export_playlist(playlist_sample.fade_in(2000).fade_out(2000), id3['file_name'] + "_sample")
+    print("saving full mix to file...")
+    export_playlist(playlist_full, id3['file_name'])
 
 
 def sample_song(song):
@@ -124,7 +123,7 @@ def sample_song(song):
     return sliced_song
 
 
-@Halo(text="Saving playlist...", spinner="moon")
+# @Halo(text="Saving playlist...", spinner="moon")
 def export_playlist(playlist, name="output"):
     """Saves playlist to file"""
     out_f = open(EXPORT_FOL + "/" + name + ".mp3", "wb")
@@ -156,10 +155,11 @@ if __name__ == "__main__":
         "-s", help="Mix down samples of the songs.", action="store_true"
     )
 
-    id3['file_name'] = input("File name for mix: ")
-    id3['artist'] = input("[id3] Artist: ")
-    id3['album'] = input("[id3] Album: ")
-    id3['title'] = input("[id3] Title: ")
+    ## TODO - convert these to args...
+    id3['file_name'] = "f_name" # input("File name for mix: ")
+    id3['artist'] = "artist_name" # input("[id3] Artist: ")
+    id3['album'] = "album_name" # input("[id3] Album: ")
+    id3['title'] = "title_name" # input("[id3] Title: ")
 
     args = parser.parse_args()
     main(args)

@@ -4,3 +4,5 @@ testfile
 export
 analysis.json
 output.json
+main.spec
+dist/
