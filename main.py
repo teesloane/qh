@@ -1,18 +1,27 @@
-""" Sing that song. """
+""" Sing that song:
+- loads a folder of MP3s from a 'mix' (required) folder.
+- loop over, shove into DS with meta data etc
+- Concat into two mixes: a sample mix and a full mix
+- export to an /export folder.   
+
+
+"""
 import os
 import sys
 import shutil
+import yaml
 import argparse
+import eyed3
 from glob import glob
+import unicodedata
 from pydub import AudioSegment
 
 SONGS = []
-
 PWD = os.getcwd()
 TMP_FOL = PWD + "/tmp/"  # DO NOT TOUCH, gets RECURSIVELY DELETED
 MIX_FOL = PWD + "/mix/"
 EXPORT_FOL = PWD + "/export/"  # DO NOT TOUCH, can get RECURSIVELY DELETED
-TRACKLIST = EXPORT_FOL + "./tracklist.txt"
+TRACKLIST = EXPORT_FOL + "./tracklist.yml"
 CROSSFADE_TIME = 3500
 SAMPLE_SIZE = 5000  # Changes based on num songs passed in.
 id3 = {}
@@ -28,11 +37,11 @@ def load_songs(song_list, ext):
 
     for file in songs:
         song = AudioSegment.from_mp3(file)
-
         audio_data = {
             "name": file.replace("../mix/", "").replace(ext, ""),
             "path:": file,
             "mp3": song,
+            "mp3_eyed3": eyed3.load(file),
             "sample": sample_song(song),
             "wav_path": "",
             "rate": None,
@@ -66,56 +75,51 @@ def setup():
         os.makedirs(EXPORT_FOL)
 
 
-def mp3_list_to_wav(lst):
-    """Convert list of mp3s to wavs. Adds wav path to the SONGS list."""
-    print("converting mp3's to wav...")
-    for file in lst:
-        wav_path = TMP_FOL + file["name"] + ".wav"  # get proper wave file name.
-        with open(wav_path, "wb") as ftwo:  # write wavs to temp folder.
-            file["mp3"].export(ftwo, format="wav")
-            file["wav_path"] = wav_path
-
-
 def mixdown():
     """Joins audio files into a mix to be exported (full mix and sample mix)"""
 
-    print("Performing Mixdown...")
+    print("Doing mixdown...")
     s_sorted = sorted(SONGS, key=lambda k: k["name"])
-    tracklist = open(TRACKLIST, "a")
     playlist_full = AudioSegment.empty()
     playlist_sample = AudioSegment.empty()
 
     # Write playlist and tracklist to memory.
     for idx, song in enumerate(s_sorted):  # Concat audio objects into full playlist.
-
-        # build sample playlist (can't start from AS.empty if using crossfade.)
+        ### build sample playlist (can't start from AS.empty if using crossfade.)
         if idx == 0:
-            playlist_sample = song["sample"][:SAMPLE_SIZE]
+            playlist_sample = song["sample"]
         else:
             audio = song["sample"]
             playlist_sample = playlist_sample.append(audio, crossfade=CROSSFADE_TIME)
 
-        # build full playlist
+        ### build full playlist
         audio = song["mp3"]
         playlist_full = playlist_full + audio
 
-        # song names have full path in it -- TODO FIXME
-        tracklist.write(song["name"] + "\n")
-
-    tracklist.close()
-
-    print("saving sample playlist to file...")
     export_playlist(
         playlist_sample.fade_in(2000).fade_out(2000), id3["file_name"] + "_sample"
     )
-    print("saving full mix to file...")
     export_playlist(playlist_full, id3["file_name"])
+    tracklist_yaml(s_sorted)
+
+
+def tracklist_yaml(sorted_songs):
+    print("Building tracklist...")
+    tracklist = []
+    for f in sorted_songs:
+        data = dict()
+        data["artist"] = unicodedata.normalize("NFKD", f["mp3_eyed3"].tag.artist).encode('ascii', "ignore")
+        data["track"] = unicodedata.normalize("NFKD", f["mp3_eyed3"].tag.title).encode('ascii', "ignore")
+        tracklist.append(data)
+
+    with open(TRACKLIST, 'w') as outfile:
+        yaml.dump(tracklist, outfile, default_flow_style=False)
 
 
 def sample_song(song):
     """Take song, get it's length, divide by two, subtract half of sampleSize, return audio"""
     song_length = len(song) / 1000 * 60
-    song_middle = song_length / 2 - (SAMPLE_SIZE / 2)
+    song_middle = song_length / 2
     sliced_song = song[song_middle : song_middle + SAMPLE_SIZE]
     return sliced_song
 

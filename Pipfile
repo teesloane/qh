@@ -9,6 +9,7 @@ scipy = "*"
 numpy = "*"
 matplotlib = "*"
 pyinstaller = "*"
+"eyed3" = "*"
 
 [dev-packages]
 rope = "*"
