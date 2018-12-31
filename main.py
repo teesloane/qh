@@ -3,9 +3,8 @@
 - loop over, shove into DS with meta data etc
 - Concat into two mixes: a sample mix and a full mix
 - export to an /export folder.   
-
-
 """
+
 import os
 import sys
 import shutil
@@ -104,6 +103,7 @@ def mixdown():
 
 
 def tracklist_yaml(sorted_songs):
+    """Create a Yaml tracklist"""
     print("Building tracklist...")
     tracklist = []
     for f in sorted_songs:
@@ -141,7 +141,7 @@ def teardown():
     print("Playlist exported to: './export/ folder'")
 
 
-def main(args):
+def main():
     """sing some songs"""
     setup()
     load_songs(SONGS, ".mp3")
@@ -150,17 +150,12 @@ def main(args):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("-artist", help="id3 tag for mix artist")
-    parser.add_argument("-album", help="id3 tag for mix artist")
-    parser.add_argument("-title", help="id3 tag for mix artist")
+    # FIXME you might run into venv shell issues here where we have to use 2.7's raw_input, but since the venv is 3.* 
+    # this project is basically being tricked into being a binary executable with pyinstaller (which is using 2.7?)
+    # you just end up running `make dist` and then testing. Yeah.
+    id3["file_name"] = raw_input("Input file name: ") or "mix"
+    id3["artist"] = raw_input("Input the artist name: ") or "unknown"
+    id3["album"] = raw_input("Input the album name: ") or "unknown"
+    id3["title"] = raw_input("Input the track title: ") or "mix"
 
-    args = parser.parse_args()
-
-    u = "Unknown"
-    id3["file_name"] = args.title or "mix"
-    id3["artist"] = args.artist or u
-    id3["album"] = args.album or u
-    id3["title"] = args.title or "mix"
-
-    main(args)
+    main()
