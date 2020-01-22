@@ -5,7 +5,7 @@
 - Grabs mp3 in a folder, sorts by name, and joins them into a playlist; and
 - exports that as a single mp3.
 
-QH also creates a little "sample" playlist that grabs a snippet of each song in the playlist and joins them together with crossfades to give you an mp3 snapshop of how the mix might sound. Currently this behaviour happens by default, but will eventually be optional.
+QH also creates a little "sample" playlist that grabs a snippet of each song in the playlist and joins them together with crossfades to give you an mp3 snapshot of how the mix might sound. Currently this behaviour happens by default, but will eventually be optional.
 
 ## Usage
 
